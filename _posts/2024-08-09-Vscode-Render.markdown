@@ -1,3 +1,14 @@
+---
+layout:     post
+title:      "VScode markdown render渲染器出错"
+subtitle:   " \"VScode markdown render渲染器出错\""
+date:       2024-08-09 20:00:00
+author:     "Mickle"
+header-img: "img/post-bg-2015.jpg"
+catalog: true
+tags:
+    - Debug
+---
 
 更新VScode后出现了这个错误：
 
