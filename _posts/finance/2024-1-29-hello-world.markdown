@@ -1,10 +1,10 @@
 ---
 layout:     post
-title:      "Hello world"
-subtitle:   " \"Left-side Signal and Right-side Signal\""
+title:      "Left-side Signal and Right-side Signal"
+subtitle:   " \"左侧信号和右侧信号\""
 date:       2024-06-13 02:51:00
 author:     "Mickle"
-header-img: "img/post-new-bookcase.jpg.jpg"
+header-img: "img/post-new-bookcase.jpg"
 catalog: true
 tags:
     - finance
