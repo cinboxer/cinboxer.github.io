@@ -1,0 +1,14 @@
+---
+layout:     post
+title:      "Follow Verification"
+subtitle:   " \"Next Generation Information Browser\""
+date:       2024-11-02 14:00:00
+author:     "Mickle"
+header-img: "img/post-bg-2015.jpg"
+catalog: true
+tags:
+    - Follow
+---
+
+This message is used to verify that this feed (feedId:75601763499678720) belongs to me (userId:73599764313854976). Join me in enjoying the next generation information browser https://follow.is.
+
