@@ -5,7 +5,7 @@ header-img: img/home-bg.jpg
 email: cinboxer@gmail.com
 description: "This is @Mickle's personal blog | Keep moving"
 keyword: "Mickle, Micheal, MJ, @Mickle, 寶澄的博客, Mickle Blog, 博客, 个人网站, 互联网, Web, Python, Quant, Data, Finance, Invest, Hunter"
-url: "https://www.linkedin.com/in/baocheng-jiao" # your host, for absolute URL
+url: "https://cinboxer.github.io/" # your host, for absolute URL
 baseurl: "" # for example, '/blog' if your blog hosted on 'host/blog'
 
 # Publish posts or collection documents with a future date.
@@ -18,7 +18,7 @@ zhihu_username: NA
 github_username: cinboxer
 twitter_username: NA
 #facebook_username:  huxpro
-linkedin_username:  Baocheng-Jiao
+linkedin_username:  baocheng-jiao
 
 # Build settings
 # from 2016, 'pygments' is unsupported on GitHub Pages. Use 'rouge' for highlighting instead.
