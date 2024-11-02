@@ -59,7 +59,7 @@ kramdown:
       start_line: 1
 
 # Disqus settings
-disqus_username: hux
+disqus_username: cinboxer
 
 # Netease settings
 netease_comment: false
@@ -75,7 +75,7 @@ ga_domain: auto
 # Sidebar settings
 sidebar: true # whether or not using Sidebar.
 sidebar-about-description: "Keep moving <br> Graduate @ BU"
-sidebar-avatar: https://github.com/Huxpro.png # use absolute URL, seeing it's used in both `/` and `/about/`
+sidebar-avatar: https://github.com/cinboxer/cinboxer.github.io/img/post-new-chess.jpg # use absolute URL, seeing it's used in both `/` and `/about/`
 
 # Featured Tags
 featured-tags: true # whether or not using Feature-Tags
