@@ -17,14 +17,14 @@ tags:
 
   ### **Bayes' Theorem Formula**
 
-  \[
+  $$
   P(A|B) = \frac{P(B|A) \cdot P(A)}{P(B)}
-  \]
+  $$
 
   Where:
 
-  - \( P(A|B) \): The posterior probability of \( A \) given \( B \) (the probability of \( A \) after observing \( B \)).
-  - \( P(B|A) \): The likelihood (the probability of observing \( B \) given \( A \)).
+  - **\( P(A|B) \)**: The posterior probability of \( A \) given \( B \) (the probability of \( A \) after observing \( B \)).
+  - **\( P(B|A) \)**: The likelihood (the probability of observing \( B \) given \( A \)).
   - \( P(A) \): The prior probability of \( A \) (our initial belief about \( A \) before observing \( B \)).
   - \( P(B) \): The marginal probability of \( B \) (the total probability of observing \( B \) under all possible scenarios).
   <br>
