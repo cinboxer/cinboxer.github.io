@@ -16,7 +16,7 @@ tags:
 
 # Blackjack Strategy
 
-## 1. Basic Strategy Calculation
+## 1. Basic Strategy Calculation (<span style="color:red;">Picking the right horses / choosing the best stocks</span>)
 
 ### 1.1. Expected Value (EV) for Each Action
 
@@ -27,6 +27,7 @@ The optimal strategy is derived by calculating the **Expected Value (EV)** for e
   $$
   EV = \sum \Big( P_{\text{outcome}} \times \text{Payoff}_{\text{outcome}} \Big)
   $$
+
   - $P_{\text{outcome}}$: Probability of a specific outcome (e.g., win, lose, push).
   - $\text{Payoff}_{\text{outcome}}$: Payout for the outcome (e.g., 1:1, 3:2 for Blackjack).
 
@@ -85,7 +86,7 @@ Construct a matrix comparing the EV of all actions:
 
 ---
 
-## 3. Bet Sizing Using the Kelly Criterion
+## 3. Bet Sizing Using the Kelly Criterion (<span style="color:red;">Deciding when to bet / determining the optimal time to enter or exit the market</span>)
 
 ### 3.1. Kelly Formula
 
