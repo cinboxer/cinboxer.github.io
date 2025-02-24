@@ -21,11 +21,12 @@ tags:
 The optimal strategy is derived by calculating the **Expected Value (EV)** for each possible action (Hit, Stand, Double, Split, Surrender) based on the player's hand and the dealer's upcard.
 
 - **Formula**:
+
   $$
   EV = \sum \left( P_{\text{outcome}} \times \text{Payoff}_{\text{outcome}} \right)
   $$
-  - \( P_{\text{outcome}} \): Probability of a specific outcome (e.g., win, lose, push).
-  - \( \text{Payoff}_{\text{outcome}} \): Payout for the outcome (e.g., 1:1, 3:2 for Blackjack).
+  - $ P_{\text{outcome}} $: Probability of a specific outcome (e.g., win, lose, push).
+  - $ \text{Payoff}_{\text{outcome}} $: Payout for the outcome (e.g., 1:1, 3:2 for Blackjack).
 
 ### 1.2. Probability Calculation
 - **Dealer's Final Hand Probability**:
