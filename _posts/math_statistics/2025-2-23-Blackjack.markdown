@@ -136,8 +136,8 @@ $$
 
 | True Count         | Strategy Adjustment                                 |
 |--------------------|-----------------------------------------------------|
-| **TC ≥ +3**      | Double down on 9 vs. 2–6; Split 10s vs. 5–6.           |
-| **TC ≤ -1**      | Avoid splitting pairs; Surrender 16 vs. 9.             |
+| **TC ≥ +3** 😊     | Double down on 9 vs. 2–6; Split 10s vs. 5–6.           |
+| **TC ≤ -1** 😢     | Avoid splitting pairs; Surrender 16 vs. 9.             |
 
 ### 5.2. Rule Variations Impact
 
