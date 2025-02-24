@@ -3,6 +3,7 @@
   MathJax.Hub.Config({
     tex2jax: {
       inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
       processEscapes: true
     }
   });
@@ -13,6 +14,9 @@
   src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_HTMLorMML"
 >
 </script>
+{% endif %}
+
+
 <!--
 <script src="https://cdn.bootcss.com/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
 -->
@@ -23,8 +27,6 @@
   src="https://fancyerii.github.io/javascripts/MathJaxLocal.js"
 >
 -->
-</script>
-{% endif %}
 
 <!--
 Source: https://github.com/Huxpro/huxpro.github.io/issues/378
