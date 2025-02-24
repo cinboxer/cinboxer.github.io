@@ -119,7 +119,7 @@ f = \frac{EV}{b}
 Normal Strategy and Strategy when our edge is 2.96%:
 | Normal Strategy | New Strategy |
 |----------------|-------------|
-| ![Normal Strategy](/_posts/math_statistics/BJ_strategy1.jpg) | ![New Strategy](/_posts/math_statistics/BJ_strategy2.jpg) |
+| ![Normal Strategy]('/img/in-post-new/BJ_strategy1.jpg') | ![New Strategy]('/img/in-post-new/BJ_strategy2.jpg') |
 
 ---
 
