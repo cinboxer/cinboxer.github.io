@@ -6,6 +6,7 @@ date:       2025-02-23 22:20:00
 author:     "Mickle"
 header-img: "img/new/HiUCute.jpg"
 catalog: true
+mathjax: true
 tags:
     - math
     - statistics
