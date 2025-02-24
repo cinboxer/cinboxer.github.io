@@ -6,6 +6,7 @@ date:       2025-01-11 13:10:00
 author:     "Mickle"
 header-img: "img/new/GSA_Capital.svg"
 catalog: true
+mathjax: true
 tags:
     - competition
     - code
