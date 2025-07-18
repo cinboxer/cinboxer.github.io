@@ -19,6 +19,9 @@ Amazon Prime Student offers a deeply discounted membership at **\$7.49 per month
 
 The **Chase Amazon Prime Rewards Visa** carries **no annual fee**, delivers **5% back** at Amazon.com, Amazon Fresh, Whole Foods Market and Chase Travel, **2% back** at gas stations, restaurants, and local transit, and **1% back** on all other purchases. As a Chase card, it is subject to the **5/24 rule** (no more than 5 new cards in 24 months), and its physical card weighs approximately **12.4 g**.
 
+**<span style="color:red;">Apply via this link to get your Chase Amazon Prime Rewards Visa:</span>**
+[Get the card here](https://www.amazon.com/dp/BT00LN946S?externalReferenceId=b34454c8-42e9-475f-9a83-4ca854e082b9)
+
 ---
 
 ### 1. Pricing Comparison  
@@ -64,6 +67,9 @@ Apply for your Prime Visa **before major Amazon sales events** so your SUB arriv
 亚马逊学生版会员费为 **\$7.49/月** 或 **\$69/年**（≈\$5.75/月），相比之下标准 Prime 为 **\$14.99/月** 或 **\$139/年**（≈\$11.58/月）。
 
 **Chase Amazon Prime Rewards Visa** 年费 **$0**，在 Amazon.com、Amazon Fresh、Whole Foods Market 和 Chase Travel 获 **5%** 返现；加油站、餐厅和公共交通获 **2%** 返现；其他类别 **1%** 返现。该卡受 **5/24 规则**（24 个月内新开卡不超过 5 张）约束，实体卡重量约 **12.4 g**。
+
+**<span style="color:red;">通过此链接获得 Chase Amazon Prime Rewards Visa:</span>**
+[点击申请](https://www.amazon.com/dp/BT00LN946S?externalReferenceId=b34454c8-42e9-475f-9a83-4ca854e082b9)
 
 ---
 
