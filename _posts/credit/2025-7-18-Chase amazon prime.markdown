@@ -42,12 +42,12 @@ The **Chase Amazon Prime Rewards Visa** carries **no annual fee**, delivers **5%
 
 1. **Enroll monthly**: Activate Prime Student at $7.49/mo.  
 2. **Apply for Chase Prime Visa**: Receive a $250 Amazon gift card welcome offer.  
-3. **Switch to annual**: Convert to $69/yr Prime Student and pay using the gift card.  
+3. **Switch to annual**: Convert to $69/yr Prime Student and pay using the Chase Amazon Prime.  
 4. **Calculate savings**:  
    - Direct fee savings: \$7.49×12 = \$89.88 vs \$69 ⇒ save **\$20.88**  
-   - Net gift card leftover: \$250 – \$69 = \$181 credit  
-5. **Effective monthly cost**: \$69/12 = \$5.75 vs \$7.49 ⇒ **23.2%** reduction  
-6. **Compare standard Prime**: \$11.58 vs \$5.75 ⇒ **50.3%** reduction
+   - Real fees: \$69 * 95% = \$65.55  
+5. **Effective monthly cost**: \$65.55/12 = \$5.4625 vs \$7.49 ⇒ **27.1%** reduction  
+6. **Compare standard Prime**: \$11.58 vs \$5.4625 ⇒ **52.8%** reduction
 
 ---
 
@@ -92,12 +92,12 @@ Apply for your Prime Visa **before major Amazon sales events** so your SUB arriv
 
 1. **按月订阅**：激活学生版 Prime，支付 $7.49/月。  
 2. **申卡拿 SUB**：申请 Chase Prime Visa，获 $250 礼品卡奖励。  
-3. **转为年费**：将订阅切换至 $69/年，并用礼品卡全额支付。  
+3. **转为年费**：将订阅切换至 $69/年，并用Chase Amazon Prime全额支付。  
 4. **节省金额**：  
    - 直接节省：\$89.88 vs \$69 ⇒ 节省 **\$20.88**  
-   - 礼品卡剩余：$181 购物余额  
-5. **月均成本**：\$5.75 vs \$7.49 ⇒ 降低 **23.2%**  
-6. **对比标准 Prime**：\$11.58 vs \$5.75 ⇒ 降低 **50.3%**
+   - 实际费用: \$69 * 95% = \$65.55  
+7. **月均成本**: \$65.55/12 = \$5.4625 vs \$7.49 ⇒ 降低 **27.1%**
+8. **对比标准 Prime**: \$11.58 vs \$5.4625 ⇒ 降低 **52.8%**
 
 ---
 
