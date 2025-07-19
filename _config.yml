@@ -1,7 +1,7 @@
 # Site settings
 title: Mickle Blog
 SEOTitle: Mickle的博客 | Mickle Blog
-header-img: img\new\Spring_Point_Ledge_Lighthouse.jpg
+header-img: "img\new\Spring_Point_Ledge_Lighthouse.jpg"
 email: cinboxer@gmail.com
 description: "This is @Mickle's personal blog | Keep moving"
 keyword: "Mickle, Micheal, MJ, @Mickle, 寶澄的博客, Mickle Blog, 博客, 个人网站, 互联网, Web, Python, Quant, Data, Finance, Invest, Hunter"
