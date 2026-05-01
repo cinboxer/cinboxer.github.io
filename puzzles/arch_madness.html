@@ -1,0 +1,764 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Arch Madness — Interactive Workbench</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  body { font-family: "Cormorant Garamond", "EB Garamond", Georgia, serif; }
+  .mono { font-family: "Inconsolata", ui-monospace, monospace; }
+</style>
+</head>
+<body class="bg-stone-50 text-stone-900">
+<div id="root"></div>
+
+<script type="text/babel" data-presets="env,react">
+// ════════════════════════════════════════════════════════════════════════════
+//   PUZZLE DATA
+// ════════════════════════════════════════════════════════════════════════════
+
+const N = 9;
+const GREEN_LIST = [
+  [0,0],[0,3],[0,5],[0,7],
+  [1,3],[1,6],[1,8],
+  [2,0],[2,7],
+  [3,8],
+  [4,0],[4,4],
+  [5,7],[5,8],
+  [7,0],
+  [8,1],[8,4],[8,6],[8,8],
+];
+const GREEN = new Set(GREEN_LIST.map(([r,c]) => `${r},${c}`));
+const CLUES = {
+  '0,2': 21,
+  '1,0': 21, '1,4': 27, '1,7': 25,
+  '2,1': 27, '2,5': 15, '2,8': 9,
+  '4,0': 25, '4,3': 27, '4,5': 45, '4,8': 9,
+  '6,0': 9,  '6,3': 63, '6,7': 45,
+  '7,1': 63, '7,4': 9,  '7,8': 288,
+  '8,6': 35,
+};
+
+// ════════════════════════════════════════════════════════════════════════════
+//   GEOMETRY  &  PARTS
+// ════════════════════════════════════════════════════════════════════════════
+const CELL_PX = 56;
+const PI4 = Math.PI / 4;
+const ARC_NONE = 0, ARC_TL = 1, ARC_TR = 2, ARC_BR = 3, ARC_BL = 4;
+
+const PART_DEFS = {
+  [ARC_NONE]: [{kind:'F', edges:['N','E','S','W'], area:1}],
+  [ARC_TL]:   [{kind:'B', edges:['N','W'], area: PI4},
+               {kind:'S', edges:['E','S'], area: 1-PI4}],
+  [ARC_TR]:   [{kind:'B', edges:['N','E'], area: PI4},
+               {kind:'S', edges:['S','W'], area: 1-PI4}],
+  [ARC_BR]:   [{kind:'B', edges:['S','E'], area: PI4},
+               {kind:'S', edges:['N','W'], area: 1-PI4}],
+  [ARC_BL]:   [{kind:'B', edges:['S','W'], area: PI4},
+               {kind:'S', edges:['N','E'], area: 1-PI4}],
+};
+const ARC_GEOM = {
+  [ARC_TL]: { cen:'TL', e1:'TR', e2:'BL' },
+  [ARC_TR]: { cen:'TR', e1:'TL', e2:'BR' },
+  [ARC_BR]: { cen:'BR', e1:'TR', e2:'BL' },
+  [ARC_BL]: { cen:'BL', e1:'TL', e2:'BR' },
+};
+const CORNER_OFFSET = { TL:[0,0], TR:[1,0], BR:[1,1], BL:[0,1] };
+
+function partWithEdge(arc, D) {
+  const parts = PART_DEFS[arc];
+  for (let i = 0; i < parts.length; i++) {
+    if (parts[i].edges.includes(D)) return i;
+  }
+  return null;
+}
+
+function getCellParts(arc) { return PART_DEFS[arc]; }
+
+// SVG path strings ----------------------------------------------------------
+function partPathStr(r, c, arc, partIdx) {
+  const X = c*CELL_PX, Y = r*CELL_PX, R = CELL_PX;
+  const TL=`${X} ${Y}`, TR=`${X+R} ${Y}`, BR=`${X+R} ${Y+R}`, BL=`${X} ${Y+R}`;
+  if (arc === ARC_NONE) return `M ${TL} L ${TR} L ${BR} L ${BL} Z`;
+  const isBig = partIdx === 0;
+  if (arc === ARC_TL) return isBig
+    ? `M ${TL} L ${TR} A ${R} ${R} 0 0 1 ${BL} Z`
+    : `M ${TR} L ${BR} L ${BL} A ${R} ${R} 0 0 0 ${TR} Z`;
+  if (arc === ARC_TR) return isBig
+    ? `M ${TL} L ${TR} L ${BR} A ${R} ${R} 0 0 1 ${TL} Z`
+    : `M ${TL} A ${R} ${R} 0 0 0 ${BR} L ${BL} Z`;
+  if (arc === ARC_BR) return isBig
+    ? `M ${TR} L ${BR} L ${BL} A ${R} ${R} 0 0 1 ${TR} Z`
+    : `M ${TL} L ${TR} A ${R} ${R} 0 0 0 ${BL} Z`;
+  if (arc === ARC_BL) return isBig
+    ? `M ${TL} L ${BL} L ${BR} A ${R} ${R} 0 0 0 ${TL} Z`
+    : `M ${TL} L ${TR} L ${BR} A ${R} ${R} 0 0 0 ${TL} Z`;
+}
+function arcStrokeStr(r, c, arc) {
+  if (arc === ARC_NONE) return '';
+  const X = c*CELL_PX, Y = r*CELL_PX, R = CELL_PX;
+  const TL=`${X} ${Y}`, TR=`${X+R} ${Y}`, BR=`${X+R} ${Y+R}`, BL=`${X} ${Y+R}`;
+  if (arc === ARC_TL) return `M ${TR} A ${R} ${R} 0 0 1 ${BL}`;
+  if (arc === ARC_TR) return `M ${TL} A ${R} ${R} 0 0 0 ${BR}`;
+  if (arc === ARC_BR) return `M ${TR} A ${R} ${R} 0 0 0 ${BL}`;
+  if (arc === ARC_BL) return `M ${TL} A ${R} ${R} 0 0 1 ${BR}`;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//   REGION COMPUTATION  (union-find on cell-parts)
+// ════════════════════════════════════════════════════════════════════════════
+function computeRegions(arcs) {
+  const parent = {};
+  const find = (x) => {
+    if (parent[x] === undefined) { parent[x] = x; return x; }
+    if (parent[x] !== x) parent[x] = find(parent[x]);
+    return parent[x];
+  };
+  const union = (a, b) => {
+    const ra = find(a), rb = find(b);
+    if (ra !== rb) parent[ra] = rb;
+  };
+
+  const partInfo = {};
+  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+    getCellParts(arcs[r][c]).forEach((p, i) => {
+      const key = `${r},${c},${i}`;
+      partInfo[key] = { r, c, i, kind: p.kind, area: p.area };
+      find(key);
+    });
+  }
+
+  const partKey = (r, c, D) => {
+    const i = partWithEdge(arcs[r][c], D);
+    return `${r},${c},${i}`;
+  };
+
+  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+    if (c < N-1) union(partKey(r, c, 'E'), partKey(r, c+1, 'W'));
+    if (r < N-1) union(partKey(r, c, 'S'), partKey(r+1, c, 'N'));
+  }
+
+  const byRoot = {};
+  Object.keys(partInfo).forEach(k => {
+    const root = find(k);
+    (byRoot[root] = byRoot[root] || []).push(k);
+  });
+  const sortedRoots = Object.keys(byRoot).sort((a, b) => {
+    const ma = byRoot[a].slice().sort()[0];
+    const mb = byRoot[b].slice().sort()[0];
+    return ma < mb ? -1 : ma > mb ? 1 : 0;
+  });
+
+  const regionOfPart = {};
+  const regions = [];
+  sortedRoots.forEach((root, id) => {
+    const parts = byRoot[root];
+    let nF = 0, nB = 0, nS = 0;
+    parts.forEach(k => {
+      const t = partInfo[k].kind;
+      if (t === 'F') nF++;
+      else if (t === 'B') nB++;
+      else if (t === 'S') nS++;
+      regionOfPart[k] = id;
+    });
+    regions.push({
+      id, parts, nF, nB, nS,
+      areaInt: nF + nS,
+      imbalance: nB - nS,
+      isIntegerArea: nB === nS,
+    });
+  });
+
+  // Dangling check
+  const danglingCells = [];
+  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+    if (arcs[r][c] !== ARC_NONE) {
+      if (regionOfPart[`${r},${c},0`] === regionOfPart[`${r},${c},1`])
+        danglingCells.push(`${r},${c}`);
+    }
+  }
+
+  // Cell → region (the region holding ≥ half of cell, i.e. partIdx 0)
+  const cellRegion = {};
+  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++)
+    cellRegion[`${r},${c}`] = regionOfPart[`${r},${c},0`];
+
+  return { regions, regionOfPart, cellRegion, danglingCells, partInfo };
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//   SMOOTH-PIECE COUNTING
+// ════════════════════════════════════════════════════════════════════════════
+const OUT = -1;
+
+function collectBoundaryEdges(arcs, regionOfPart) {
+  const edges = [];
+  const myRegion = (r, c, D) => regionOfPart[`${r},${c},${partWithEdge(arcs[r][c], D)}`];
+
+  // Cell edges
+  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+    // North edge: (c,r)→(c+1,r), going east
+    {
+      const RmI = myRegion(r, c, 'N');
+      const Rother = (r === 0) ? OUT : myRegion(r-1, c, 'S');
+      if (RmI !== Rother) {
+        edges.push({type:'S', p1:[c,r], p2:[c+1,r], t1:[1,0], t2:[1,0],
+                    L: Rother, R: RmI});
+      }
+    }
+    // West edge: (c,r)→(c,r+1), going south
+    {
+      const RmI = myRegion(r, c, 'W');
+      const Rother = (c === 0) ? OUT : myRegion(r, c-1, 'E');
+      if (RmI !== Rother) {
+        edges.push({type:'S', p1:[c,r], p2:[c,r+1], t1:[0,1], t2:[0,1],
+                    L: RmI, R: Rother});
+      }
+    }
+  }
+  for (let c = 0; c < N; c++) {
+    const RmI = myRegion(N-1, c, 'S');
+    edges.push({type:'S', p1:[c,N], p2:[c+1,N], t1:[1,0], t2:[1,0],
+                L: RmI, R: OUT});
+  }
+  for (let r = 0; r < N; r++) {
+    const RmI = myRegion(r, N-1, 'E');
+    edges.push({type:'S', p1:[N,r], p2:[N,r+1], t1:[0,1], t2:[0,1],
+                L: OUT, R: RmI});
+  }
+
+  // Arcs
+  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+    const arc = arcs[r][c];
+    if (arc === ARC_NONE) continue;
+    const G = ARC_GEOM[arc];
+    const cen = [c + CORNER_OFFSET[G.cen][0], r + CORNER_OFFSET[G.cen][1]];
+    const P1  = [c + CORNER_OFFSET[G.e1][0],  r + CORNER_OFFSET[G.e1][1]];
+    const P2  = [c + CORNER_OFFSET[G.e2][0],  r + CORNER_OFFSET[G.e2][1]];
+    const Rbig = regionOfPart[`${r},${c},0`];
+    const Rsm  = regionOfPart[`${r},${c},1`];
+    const t1 = [P2[0]-cen[0], P2[1]-cen[1]];
+    const t2 = [cen[0]-P1[0], cen[1]-P1[1]];
+    // Determine which side is BIG (toward center).
+    // Right-of-t1 (screen y-down rotation by +90°) = (-t1[1], t1[0])
+    const right_dir = [-t1[1], t1[0]];
+    const cen_dir = [cen[0]-P1[0], cen[1]-P1[1]];
+    const cenOnRight = (cen_dir[0]===right_dir[0] && cen_dir[1]===right_dir[1]);
+    const L = cenOnRight ? Rsm : Rbig;
+    const R = cenOnRight ? Rbig : Rsm;
+    edges.push({type:'A', p1:P1, p2:P2, cen, t1, t2, L, R});
+  }
+  return edges;
+}
+
+function smoothPieces(arcs, regionOfPart) {
+  const edges = collectBoundaryEdges(arcs, regionOfPart);
+  const byRegion = {};
+  const push = (rid, e) => { (byRegion[rid] = byRegion[rid] || []).push(e); };
+
+  edges.forEach(e => {
+    if (e.L !== OUT) {
+      push(e.L, {type:e.type, from:e.p1, to:e.p2, tFrom:e.t1, tTo:e.t2});
+    }
+    if (e.R !== OUT) {
+      push(e.R, {type:e.type, from:e.p2, to:e.p1,
+                  tFrom:[-e.t2[0], -e.t2[1]], tTo:[-e.t1[0], -e.t1[1]]});
+    }
+  });
+
+  const result = {};
+  for (const rid in byRegion) {
+    const elist = byRegion[rid];
+    const outAt = {};
+    elist.forEach((e, i) => {
+      const k = `${e.from[0]},${e.from[1]}`;
+      (outAt[k] = outAt[k] || []).push(i);
+    });
+    const used = new Set();
+    let totalBreaks = 0;
+    for (let s = 0; s < elist.length; s++) {
+      if (used.has(s)) continue;
+      const cycle = [];
+      let cur = s;
+      while (cur !== null && !used.has(cur)) {
+        used.add(cur);
+        cycle.push(cur);
+        const endK = `${elist[cur].to[0]},${elist[cur].to[1]}`;
+        const cands = (outAt[endK] || []).filter(i => !used.has(i));
+        if (cands.length === 0) cur = null;
+        else if (cands.length === 1) cur = cands[0];
+        else {
+          // pick smallest CCW (math) turn from current tTo
+          const tIn = elist[cur].tTo;
+          let best = cands[0], bestAng = Infinity;
+          const ang = (a,b) => {
+            const aIn = Math.atan2(-a[1], a[0]);
+            const aOut = Math.atan2(-b[1], b[0]);
+            let d = (aOut - aIn) % (2*Math.PI);
+            if (d < 0) d += 2*Math.PI;
+            return d;
+          };
+          cands.forEach(ci => {
+            const v = ang(tIn, elist[ci].tFrom);
+            if (v < bestAng) { bestAng = v; best = ci; }
+          });
+          cur = best;
+        }
+      }
+      let breaks = 0;
+      const same = (a,b) => a[0]===b[0] && a[1]===b[1];
+      for (let i = 0; i < cycle.length; i++) {
+        const ePrev = elist[cycle[(i-1+cycle.length)%cycle.length]];
+        const eCurr = elist[cycle[i]];
+        if (!same(ePrev.tTo, eCurr.tFrom)) breaks++;
+      }
+      if (breaks === 0) breaks = 1;
+      totalBreaks += breaks;
+    }
+    result[rid] = totalBreaks;
+  }
+  return result;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//   COLOURS
+// ════════════════════════════════════════════════════════════════════════════
+function regionFill(id) {
+  const hue = (id * 137.508) % 360;
+  return `hsl(${hue.toFixed(1)}, 38%, 86%)`;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//   ANSWER COMPUTATION
+// ════════════════════════════════════════════════════════════════════════════
+// For each cell, score = (smooth pieces of its region) × (region area).
+// Then answer = sum of squares of row sums + sum of squares of col sums.
+
+function computeAnswer(regions, cellRegion, sp) {
+  const score = {};  // region id -> score
+  regions.forEach(r => {
+    const s = sp[r.id];
+    if (!r.isIntegerArea || s === undefined) score[r.id] = null;
+    else score[r.id] = s * r.areaInt;
+  });
+  // Per-cell score
+  const cellScore = {};
+  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+    const rid = cellRegion[`${r},${c}`];
+    cellScore[`${r},${c}`] = score[rid];
+  }
+  // Row / col sums
+  const rowSum = Array(N).fill(0);
+  const colSum = Array(N).fill(0);
+  let allKnown = true;
+  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+    const v = cellScore[`${r},${c}`];
+    if (v === null || v === undefined) { allKnown = false; }
+    else { rowSum[r] += v; colSum[c] += v; }
+  }
+  const ans = allKnown
+    ? rowSum.reduce((a,x)=>a+x*x,0) + colSum.reduce((a,x)=>a+x*x,0)
+    : null;
+  return { score, cellScore, rowSum, colSum, allKnown, answer: ans };
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//   MAIN COMPONENT
+// ════════════════════════════════════════════════════════════════════════════
+const { useState, useMemo, useCallback } = React;
+
+function App() {
+  const [arcs, setArcs] = useState(() =>
+    Array.from({length: N}, () => Array(N).fill(ARC_NONE))
+  );
+  const [showRegions, setShowRegions]     = useState(true);
+  const [showFilledScores, setShowFilled] = useState(true);
+  const [showDataPanel, setShowDataPanel] = useState(false);
+
+  const onCellClick = useCallback((r, c, e) => {
+    if (GREEN.has(`${r},${c}`)) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const left = x < rect.width / 2;
+    const top  = y < rect.height / 2;
+    let chosen;
+    if (top && left)        chosen = ARC_TL;
+    else if (top && !left)  chosen = ARC_TR;
+    else if (!top && !left) chosen = ARC_BR;
+    else                    chosen = ARC_BL;
+    setArcs(prev => {
+      const next = prev.map(row => row.slice());
+      next[r][c] = (prev[r][c] === chosen) ? ARC_NONE : chosen;
+      return next;
+    });
+  }, []);
+
+  const onCellRightClick = useCallback((r, c, e) => {
+    e.preventDefault();
+    setArcs(prev => {
+      const next = prev.map(row => row.slice());
+      next[r][c] = ARC_NONE;
+      return next;
+    });
+  }, []);
+
+  const reset = () => setArcs(Array.from({length: N}, () => Array(N).fill(ARC_NONE)));
+
+  const analysis = useMemo(() => computeRegions(arcs), [arcs]);
+  const { regions, regionOfPart, cellRegion, danglingCells } = analysis;
+
+  const sp = useMemo(() =>
+    smoothPieces(arcs, regionOfPart),
+    [arcs, regionOfPart]
+  );
+
+  const ans = useMemo(() =>
+    computeAnswer(regions, cellRegion, sp),
+    [regions, cellRegion, sp]
+  );
+
+  // Clue validity check
+  const clueChecks = Object.entries(CLUES).map(([k, v]) => {
+    const rid = cellRegion[k];
+    const reg = regions.find(r => r.id === rid);
+    const score = (reg && reg.isIntegerArea && sp[rid] !== undefined)
+      ? sp[rid] * reg.areaInt : null;
+    return { cell: k, expected: v, got: score, ok: score === v };
+  });
+  const allCluesOk = clueChecks.every(c => c.ok);
+  const allInteger = regions.every(r => r.isIntegerArea);
+  const noDangling = danglingCells.length === 0;
+  const arcCount   = arcs.flat().filter(a => a !== ARC_NONE).length;
+
+  const SVG_PAD = 8;
+  const SVG_SIZE = N * CELL_PX + 2 * SVG_PAD;
+
+  return (
+    <div className="min-h-screen">
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <header className="mb-6 border-b border-stone-300 pb-4">
+          <div className="flex items-baseline justify-between flex-wrap gap-4">
+            <div>
+              <h1 className="text-4xl font-semibold tracking-tight">Arch Madness</h1>
+              <p className="text-stone-600 italic mt-1">Jane Street puzzle — interactive workbench</p>
+            </div>
+            <div className="text-sm text-stone-500 mono">
+              9 × 9 · {arcCount} arc{arcCount===1?'':'s'} · {regions.length} region{regions.length===1?'':'s'}
+            </div>
+          </div>
+        </header>
+
+        <div className="mb-6 text-[15px] leading-relaxed text-stone-700">
+          <p>
+            <span className="italic">Click</span> a cell quadrant (TL · TR · BR · BL) to place an arc with that corner as
+            its centre; click the same quadrant again, or <span className="italic">right-click</span>, to remove the arc.
+            Green cells cannot hold arcs.
+          </p>
+        </div>
+
+        <div className="flex gap-8 flex-wrap">
+          <div className="flex-shrink-0">
+            <svg
+              width={SVG_SIZE} height={SVG_SIZE}
+              viewBox={`${-SVG_PAD} ${-SVG_PAD} ${SVG_SIZE} ${SVG_SIZE}`}
+              className="bg-white shadow-md rounded-sm border border-stone-300">
+
+              {/* Region fills */}
+              {showRegions && (() => {
+                const els = [];
+                for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+                  if (GREEN.has(`${r},${c}`)) continue;
+                  const arc = arcs[r][c];
+                  const parts = getCellParts(arc);
+                  parts.forEach((p, i) => {
+                    const rid = regionOfPart[`${r},${c},${i}`];
+                    els.push(
+                      <path key={`f-${r}-${c}-${i}`}
+                            d={partPathStr(r, c, arc, i)}
+                            fill={regionFill(rid)} stroke="none"/>
+                    );
+                  });
+                }
+                return els;
+              })()}
+
+              {/* Green cells */}
+              {GREEN_LIST.map(([r, c]) => (
+                <rect key={`g-${r}-${c}`}
+                      x={c*CELL_PX} y={r*CELL_PX}
+                      width={CELL_PX} height={CELL_PX}
+                      fill="#bbf0c1" stroke="none"/>
+              ))}
+
+              {/* Dangling warnings */}
+              {danglingCells.map(k => {
+                const [r, c] = k.split(',').map(Number);
+                return (
+                  <rect key={`dang-${k}`}
+                        x={c*CELL_PX+1.5} y={r*CELL_PX+1.5}
+                        width={CELL_PX-3} height={CELL_PX-3}
+                        fill="none" stroke="#dc2626" strokeWidth={2.5}
+                        strokeDasharray="4 3" pointerEvents="none"/>
+                );
+              })}
+
+              {/* Grid lines */}
+              {Array.from({length: N+1}).map((_, i) => (
+                <g key={`gl-${i}`}>
+                  <line x1={i*CELL_PX} y1={0} x2={i*CELL_PX} y2={N*CELL_PX}
+                        stroke="#888" strokeWidth={i===0||i===N?2:0.7}/>
+                  <line x1={0} y1={i*CELL_PX} x2={N*CELL_PX} y2={i*CELL_PX}
+                        stroke="#888" strokeWidth={i===0||i===N?2:0.7}/>
+                </g>
+              ))}
+
+              {/* Arc strokes */}
+              {arcs.flatMap((row, r) =>
+                row.map((a, c) => a === ARC_NONE ? null : (
+                  <path key={`arc-${r}-${c}`}
+                        d={arcStrokeStr(r, c, a)}
+                        fill="none" stroke="#1c1917" strokeWidth={2.4}
+                        strokeLinecap="round"/>
+                ))
+              )}
+
+              {/* Click targets */}
+              {Array.from({length: N}).flatMap((_, r) =>
+                Array.from({length: N}).map((_, c) => (
+                  <rect key={`hit-${r}-${c}`}
+                        x={c*CELL_PX} y={r*CELL_PX}
+                        width={CELL_PX} height={CELL_PX}
+                        fill="transparent"
+                        style={{cursor: GREEN.has(`${r},${c}`) ? 'not-allowed' : 'pointer'}}
+                        onClick={(e) => onCellClick(r, c, e)}
+                        onContextMenu={(e) => onCellRightClick(r, c, e)}/>
+                ))
+              )}
+
+              {/* Filled-in scores (small grey numbers) */}
+              {showFilledScores && (() => {
+                const els = [];
+                for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+                  const rid = cellRegion[`${r},${c}`];
+                  const reg = regions.find(rr => rr.id === rid);
+                  if (!reg || !reg.isIntegerArea || sp[rid] === undefined) continue;
+                  const sc = sp[rid] * reg.areaInt;
+                  if (CLUES[`${r},${c}`] !== undefined) continue;
+                  els.push(
+                    <text key={`sc-${r}-${c}`}
+                          x={c*CELL_PX + CELL_PX/2}
+                          y={r*CELL_PX + CELL_PX/2 + 5}
+                          textAnchor="middle"
+                          fontSize={13} fill="#6b6b6b"
+                          opacity="0.7"
+                          pointerEvents="none"
+                          className="mono">
+                      {sc}
+                    </text>
+                  );
+                }
+                return els;
+              })()}
+
+              {/* Clue numbers */}
+              {Object.entries(CLUES).map(([k, v]) => {
+                const [r, c] = k.split(',').map(Number);
+                const rid = cellRegion[`${r},${c}`];
+                const reg = regions.find(rr => rr.id === rid);
+                const got = (reg && reg.isIntegerArea && sp[rid] !== undefined)
+                              ? sp[rid] * reg.areaInt : null;
+                const ok = got === v;
+                const fill = (got === null) ? '#1c1917' : (ok ? '#15803d' : '#b91c1c');
+                return (
+                  <text key={`clue-${k}`}
+                        x={c*CELL_PX + 6} y={r*CELL_PX + 18}
+                        fontSize={15} fontWeight={600}
+                        fill={fill} pointerEvents="none" className="mono">
+                    {v}
+                  </text>
+                );
+              })}
+            </svg>
+
+            <div className="mt-3 flex gap-2 flex-wrap">
+              <button onClick={reset}
+                      className="px-3 py-1.5 text-sm rounded border border-stone-400 hover:bg-stone-200 transition">
+                Reset
+              </button>
+              <button onClick={() => setShowRegions(s => !s)}
+                      className="px-3 py-1.5 text-sm rounded border border-stone-400 hover:bg-stone-200 transition">
+                {showRegions ? 'Hide' : 'Show'} regions
+              </button>
+              <button onClick={() => setShowFilled(s => !s)}
+                      className="px-3 py-1.5 text-sm rounded border border-stone-400 hover:bg-stone-200 transition">
+                {showFilledScores ? 'Hide' : 'Show'} filled scores
+              </button>
+              <button onClick={() => setShowDataPanel(s => !s)}
+                      className="px-3 py-1.5 text-sm rounded border border-stone-400 hover:bg-stone-200 transition">
+                {showDataPanel ? 'Hide' : 'Show'} data
+              </button>
+            </div>
+          </div>
+
+          {/* Right column */}
+          <div className="flex-1 min-w-[320px] space-y-4">
+
+            {/* Validity */}
+            <section className="bg-white border border-stone-300 rounded p-4">
+              <h2 className="text-xl font-semibold mb-2">Validity</h2>
+              <ul className="space-y-1 text-[15px]">
+                <li>
+                  <span className={noDangling ? 'text-emerald-700' : 'text-red-700'}>
+                    {noDangling ? '✓' : '✗'}
+                  </span>{' '} No dangling arcs
+                  {!noDangling && <span className="text-stone-500 italic"> ({danglingCells.length} cell{danglingCells.length===1?'':'s'})</span>}
+                </li>
+                <li>
+                  <span className={allInteger ? 'text-emerald-700' : 'text-red-700'}>
+                    {allInteger ? '✓' : '✗'}
+                  </span>{' '} Every region has integer area
+                </li>
+                <li>
+                  <span className={allCluesOk ? 'text-emerald-700' : 'text-red-700'}>
+                    {allCluesOk ? '✓' : '✗'}
+                  </span>{' '} All 18 clues satisfied
+                </li>
+                {ans.allKnown && (
+                  <li className="pt-2 mt-2 border-t border-stone-200">
+                    <span className="font-semibold">Answer:</span>{' '}
+                    <span className="mono text-lg">{ans.answer.toLocaleString()}</span>
+                  </li>
+                )}
+              </ul>
+            </section>
+
+            {/* Regions */}
+            <section className="bg-white border border-stone-300 rounded p-4">
+              <h2 className="text-xl font-semibold mb-2">Regions</h2>
+              <div className="overflow-auto">
+                <table className="text-[13px] mono w-full">
+                  <thead className="text-stone-500 border-b border-stone-300">
+                    <tr>
+                      <th className="text-left  pr-2 pb-1">id</th>
+                      <th className="text-right pr-2 pb-1">full</th>
+                      <th className="text-right pr-2 pb-1">big</th>
+                      <th className="text-right pr-2 pb-1">sml</th>
+                      <th className="text-right pr-2 pb-1">area</th>
+                      <th className="text-right pr-2 pb-1">smooth</th>
+                      <th className="text-right pr-2 pb-1">score</th>
+                      <th className="text-left  pl-2 pb-1">clue(s)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {regions.map(reg => {
+                      const s = sp[reg.id];
+                      const score = (reg.isIntegerArea && s !== undefined) ? s * reg.areaInt : null;
+                      const cluesInReg = Object.entries(CLUES)
+                        .filter(([k]) => cellRegion[k] === reg.id)
+                        .map(([k, v]) => `${v}@${k}`);
+                      const clueOk = cluesInReg.length === 0 ||
+                        cluesInReg.every(cs => parseInt(cs.split('@')[0]) === score);
+                      return (
+                        <tr key={reg.id}
+                            className={!reg.isIntegerArea ? 'bg-red-50' :
+                                       (cluesInReg.length>0 && !clueOk ? 'bg-amber-50' : '')}>
+                          <td className="pr-2 py-0.5">
+                            <span className="inline-block w-3 h-3 rounded-sm mr-1 align-middle"
+                                  style={{ backgroundColor: regionFill(reg.id) }}/>
+                            {reg.id}
+                          </td>
+                          <td className="text-right pr-2">{reg.nF}</td>
+                          <td className="text-right pr-2">{reg.nB}</td>
+                          <td className="text-right pr-2">{reg.nS}</td>
+                          <td className="text-right pr-2">
+                            {reg.isIntegerArea ? reg.areaInt
+                                : <span className="text-red-700">{reg.areaInt}{reg.imbalance>0?'+':''}{reg.imbalance}π/4</span>}
+                          </td>
+                          <td className="text-right pr-2">{s !== undefined ? s : '-'}</td>
+                          <td className="text-right pr-2 font-semibold">{score !== null ? score : '-'}</td>
+                          <td className="pl-2 text-stone-600 text-[12px]">{cluesInReg.join(', ')}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <p className="mt-2 text-xs text-stone-500 italic">
+                Area integer ⇔ <span className="mono not-italic">big = sml</span>. Score = smooth × area.
+              </p>
+            </section>
+
+            {/* Clue checks */}
+            <section className="bg-white border border-stone-300 rounded p-4">
+              <h2 className="text-xl font-semibold mb-2">Clues</h2>
+              <table className="text-[13px] mono w-full">
+                <thead className="text-stone-500">
+                  <tr>
+                    <th className="text-left  pr-2 pb-1">cell</th>
+                    <th className="text-right pr-2 pb-1">expected</th>
+                    <th className="text-right pr-2 pb-1">got</th>
+                    <th className="text-left  pl-2 pb-1"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {clueChecks.map(c => (
+                    <tr key={c.cell}>
+                      <td className="pr-2 py-0.5">({c.cell})</td>
+                      <td className="text-right pr-2">{c.expected}</td>
+                      <td className="text-right pr-2">{c.got !== null ? c.got : '-'}</td>
+                      <td className="pl-2">
+                        <span className={c.ok ? 'text-emerald-600' : (c.got===null ? 'text-stone-400' : 'text-red-600')}>
+                          {c.ok ? '✓' : (c.got===null ? '·' : '✗')}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </section>
+
+            {/* Data export */}
+            {showDataPanel && (
+              <section className="bg-stone-900 text-stone-100 border border-stone-700 rounded p-4 text-[12px]">
+                <h2 className="text-base font-semibold mb-2 text-stone-300">Structured data</h2>
+                <pre className="whitespace-pre-wrap break-words leading-relaxed mono">{
+`# 9x9 grid; (row, col) is 0-indexed, row 0 = top.
+GREEN_CELLS = ${JSON.stringify(GREEN_LIST)}
+
+CLUES = {
+${Object.entries(CLUES).map(([k,v]) => `    (${k}): ${v},`).join('\n')}
+}
+
+# arcs: 0=none, 1=TL, 2=TR, 3=BR, 4=BL
+ARCS = [
+${arcs.map(row => '    [' + row.join(', ') + '],').join('\n')}
+]
+
+# Regions:
+${regions.map(r => `# region ${r.id}: full=${r.nF} big=${r.nB} sml=${r.nS} area=${r.isIntegerArea ? r.areaInt : `${r.areaInt} + ${r.imbalance}·π/4`} smooth=${sp[r.id] || '-'} score=${(r.isIntegerArea && sp[r.id] !== undefined) ? sp[r.id]*r.areaInt : '-'}`).join('\n')}
+
+${ans.allKnown ? `# row sums: [${ans.rowSum.join(', ')}]\n# col sums: [${ans.colSum.join(', ')}]\n# answer:   ${ans.answer}` : '# (regions still non-integer or smoothness unresolved)'}
+`}</pre>
+              </section>
+            )}
+          </div>
+        </div>
+
+        <footer className="mt-10 pt-4 border-t border-stone-300 text-[12px] text-stone-500 italic">
+          Tip: a region's area is integer iff its <span className="mono not-italic">big</span> count equals its <span className="mono not-italic">sml</span> count.
+          Clue numbers turn green when the score of their region matches.
+        </footer>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
