@@ -4,7 +4,7 @@ title:      "Jane Street Arch Madness 互动求解工具"
 subtitle:   "9×9 弧线分割谜题 — 实时计算面积、光滑段数、score"
 date:       2026-05-01
 author:     "Mickle"
-header-img: "img/post-bg-2015.jpg"
+header-img: "img/new/JaneStreet_icon.jpg"
 catalog:    true
 tags:
     - Puzzle
